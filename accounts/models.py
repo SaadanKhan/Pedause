@@ -7,7 +7,7 @@ class CustomUser(AbstractUser):
     last_name = models.CharField(max_length=50, blank=True, null=True)
     gender = models.CharField(max_length=30, null=True, blank=True)
     email = models.EmailField(unique=True, null=True, blank=True)
-    phone = models.CharField(max_length=15)
+    phone = models.CharField(max_length=15, unique=True)
     otp = models.IntegerField(null=True, blank=True)
     otp_created_at = models.DateTimeField(null=True, blank=True) 
     is_verified = models.BooleanField(default=False)
@@ -17,10 +17,17 @@ class CustomUser(AbstractUser):
     is_active = models.BooleanField(default=True)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['phone']
-
+    REQUIRED_FIELDS = ['phone', 'username']
+    
     def __str__(self):
-        return str(self.phone)
+        return self.phone
+
+    def save(self, *args, **kwargs):
+        if self.email:
+            self.username = self.email
+        else:
+            self.username = " "
+        super().save(*args, **kwargs)
 
 
 class SocialAccount(models.Model):

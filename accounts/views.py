@@ -41,8 +41,6 @@ class UserLogin(APIView):
         try:
             phone = request.data['phone']
             user_against_phone = CustomUser.objects.filter(phone=phone).first()
-
-            print(user_against_phone)
             
             if user_against_phone:
                 user_otp = random.randint(1111,9999)
@@ -54,7 +52,6 @@ class UserLogin(APIView):
 
                 return Response({
                    'success': True,
-                   'account verified': user_against_phone.is_verified,
                    'message': 'OTP has been sent to your device',
                    'OTP': user_otp
                     }, status=status.HTTP_400_BAD_REQUEST)
@@ -62,16 +59,17 @@ class UserLogin(APIView):
             else:
                 user_otp = random.randint(1111,9999)
                 new_user = CustomUser.objects.create(
+                    phone = phone,
                     otp = user_otp,
                     otp_created_at = timezone.now()
                 )
 
-                send_message(user_otp, phone)
+                # send_message(user_otp, phone)
                 
                 return Response({
                    'success': True,
+                   'message': 'OTP has been sent to your device',
                    'account verified': new_user.is_verified,
-                   'message': 'Account created, OTP has been sent to your device',
                    'OTP': user_otp
                     }, status=status.HTTP_400_BAD_REQUEST)
         
@@ -97,8 +95,8 @@ class VerifyOTP(APIView):
                     token, created = Token.objects.get_or_create(user=user_against_otp)
                     return Response({
                         'success': True,
-                        'token': token.key,
-                        'message': 'Verification Successful',
+                        'account verified': user_against_otp.is_verified,
+                        'token': token.key
                         }, status=status.HTTP_200_OK)
                 
                 else:
