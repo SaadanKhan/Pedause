@@ -21,6 +21,7 @@ class Room(models.Model):
     category = models.CharField(max_length=100, null=True, blank=True)
     bed = models.IntegerField(null=True, blank=True, default=1)
     bathroom = models.IntegerField(null=True, blank=True, default=1)
+    members = models.IntegerField(null=True, blank=True)
     price_per_day = models.IntegerField(null=True, blank=True)
     about = models.TextField(null=True, blank=True, default="About the Room")
     gallery = models.ManyToManyField('RoomImage', related_name='room_gallery', blank=True)
@@ -45,6 +46,7 @@ class RoomImage(models.Model):
 class UserRoom(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    
     checkin_date = models.DateTimeField()
     checkout_date = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)

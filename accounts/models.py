@@ -8,6 +8,7 @@ class CustomUser(AbstractUser):
     gender = models.CharField(max_length=30, null=True, blank=True)
     email = models.EmailField(unique=True, null=True, blank=True)
     phone = models.CharField(max_length=15, unique=True)
+    account_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     otp = models.IntegerField(null=True, blank=True)
     otp_created_at = models.DateTimeField(null=True, blank=True) 
     is_verified = models.BooleanField(default=False)
@@ -17,7 +18,7 @@ class CustomUser(AbstractUser):
     is_active = models.BooleanField(default=True)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['phone', 'username']
+    REQUIRED_FIELDS = ['phone','username']
     
     def __str__(self):
         return self.phone

@@ -1,6 +1,7 @@
 from . models import *
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
+from .utils import *
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -21,20 +22,22 @@ class SocialAccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = SocialAccount
         fields = '__all__'
+        extra_kwargs = {
+            'phone': {'required': False}
+        }
 
-    def create(self, validated_data):
+    def create(self, validated_data): 
+        random_phone = generate_unique_phone()
 
-        user = CustomUser.objects.create(
-            phone = validated_data.get('phone'),
-            email = validated_data.get('email'),
-            is_verified = True,
-        )
-        
         social_account = SocialAccount.objects.create(
-            user = user,
+            user = CustomUser.objects.create(
+                phone = random_phone,
+                email = validated_data.get('email'),
+                is_verified = True),
+                
             apple_id = validated_data.get('apple_id', None),
             name = validated_data.get('name'),
-            phone=validated_data.get('phone'),
+            phone= random_phone,
             type = validated_data.get('type'),
             email=validated_data.get('email')
             )

@@ -1,6 +1,13 @@
 from django.utils import timezone
 from twilio.rest import Client
+import random
+from .models import CustomUser
 
+def generate_unique_phone():
+    while True:
+        phone = str(random.randint(10**10, 10**11 - 1))
+        if not CustomUser.objects.filter(phone=phone).exists():
+            return phone
 
 
 def is_valid_otp(user):

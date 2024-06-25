@@ -208,11 +208,13 @@ class UserSocialLogin(APIView):
         try:
             user_apple_id = request.data.get('apple_id')
             user_name = request.data.get('name')
+            user_phone = request.data.get('phone')
             user_acc_type = request.data.get('type')
             user_email = request.data.get('email')
 
             user_apple_id = user_apple_id if user_apple_id is not None else ""
             user_name = user_name if user_name is not None else ""
+            user_phone = user_phone if user_phone is not None else ""
             user_acc_type = user_acc_type if user_acc_type is not None else ""
             user_email = user_email if user_email is not None else ""
 
@@ -231,7 +233,7 @@ class UserSocialLogin(APIView):
             else:
                 user_email = 'NotAnyEmail'
 
-            if user_apple_id or user_email:
+            if user_apple_id or user_email or user_phone:
                 try:
                     social_user = SocialAccount.objects.get(email=user_email)
                 except SocialAccount.DoesNotExist:
@@ -306,7 +308,7 @@ class UserSocialLogin(APIView):
 
                     # For Facebook
                     if user_acc_type == 'facebook':
-                        user = SocialAccount.objects.filter(email=user_email).first()
+                        user = SocialAccount.objects.filter(phone=user_phone).first()
                         if user is not None:
                             user_obj = CustomUser.objects.filter(email=user.email).first()
 
@@ -348,8 +350,8 @@ class UserSocialLogin(APIView):
                                 user = SocialAccount.objects.filter(email=user_email).first()
 
                                 if serializer.is_valid():
-                                    social_account = serializer.save()
-                                    user = social_account.user
+                                    serializer.save()
+
                                     login(request, user)
 
                                     token, created = Token.objects.get_or_create(user=user)
@@ -360,13 +362,14 @@ class UserSocialLogin(APIView):
                                         'message': 'Created a social account successfully',
                                         'data': { 
                                             'token': token.key,
-                                            'user': serializer.data,
+                                            'user': user_serializer.data,
                                             }
                                     }, status=status.HTTP_200_OK)
 
+
                                 return Response({
                                         'success': False,
-                                        'message': serializer.errors,
+                                        'message': 'Unable to create a new social account',
                                     },
                                     status= status.HTTP_400_BAD_REQUEST)
                             
@@ -393,8 +396,7 @@ class UserSocialLogin(APIView):
                                 user = SocialAccount.objects.filter(email=user_email).first()
 
                                 if serializer.is_valid():
-                                    social_account = serializer.save()
-                                    user = social_account.user
+                                    serializer.save()
 
                                     login(request, user)
 
@@ -434,14 +436,13 @@ class UserSocialLogin(APIView):
                     # If account type is Facebook
                     if user_acc_type == 'facebook':
                         # Create a new apple account
-                        if user_email and user_name and user_acc_type:
+                        if user_email and user_name and user_acc_type and user_phone:
                             try:
                                 serializer = SocialAccountSerializer(data=request.data)
-                                user = SocialAccount.objects.filter(email=user_email).first()
+                                user = SocialAccount.objects.filter(phone=user_phone).first()
 
                                 if serializer.is_valid():
-                                    social_account = serializer.save()
-                                    user = social_account.user
+                                    serializer.save()
 
                                     login(request, user)
 
