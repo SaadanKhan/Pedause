@@ -70,6 +70,103 @@ class GetRoomsByID(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
 
 
+class FilterRoomsByName(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            search_query = request.data.get('name', None)
+            if search_query:
+                rooms = Room.objects.filter(name__icontains=search_query)
+            else:
+                rooms = Room.objects.all()
+            
+            if rooms.exists():
+                serializer = RoomSerializer(rooms, many=True)
+                return Response({
+                    'success': True,
+                    'message': 'Rooms found',
+                    'data': serializer.data
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'success': False,
+                    'message': 'No rooms found'
+                }, status=status.HTTP_404_NOT_FOUND)
+        
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AddOrRemoveFavoriteRoom(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            room_id = request.data.get('room_id', None)
+            if room_id:
+                room = Room.objects.filter(id = room_id).first()
+                if room:
+                    user_fvrt_room = UserFavouriteRoom.objects.filter(user = request.user, room = room).first()
+                    if user_fvrt_room:
+                        user_fvrt_room.delete()
+                        return Response({
+                            'success': True,
+                           'message': 'Room removed from favorites'
+                        }, status=status.HTTP_200_OK)
+                    else:
+                        user_fvrt_room = UserFavouriteRoom.objects.create(user = request.user, room = room)
+                        return Response({
+                            'success': True,
+                           'message': 'Room added to favorites'
+                        }, status=status.HTTP_201_CREATED)
+                    
+                else:
+                    return Response({
+                        'success': False,
+                        'message': 'Room not found'
+                    }, status=status.HTTP_404_NOT_FOUND)  
+                  
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': str(e)
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
+
+class GetAllfavouriteRooms(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            user_fvrt_room = UserFavouriteRoom.objects.filter(user = request.user).all()
+            if user_fvrt_room:
+                serializer = UserFvrtRoomSerializer(user_fvrt_room, many=True)
+                return Response({
+                    'success': True,
+                   'message': 'Favourite rooms',
+                    'data': serializer.data
+                }, status=status.HTTP_200_OK)
+            
+            else:
+                return Response({
+                    'success': False,
+                   'message': 'No room found'
+                }, status=status.HTTP_404_NOT_FOUND)
+                  
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': str(e)
+                }, status=status.HTTP_400_BAD_REQUEST)    
+
+
 class GetUserFavouriteRoom(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -101,7 +198,7 @@ class GetUserFavouriteRoom(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class GetReviews(APIView):
+class GetAllReviews(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     
