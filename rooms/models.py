@@ -46,7 +46,6 @@ class RoomImage(models.Model):
 class UserRoom(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
-    
     checkin_date = models.DateTimeField()
     checkout_date = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -60,6 +59,18 @@ class UserRoom(models.Model):
 class UserFavouriteRoom(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.user.username
+    
+class RoomTicket(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    checkin_date = models.DateTimeField()
+    checkout_date = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)

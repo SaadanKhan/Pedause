@@ -1,4 +1,4 @@
-from .models import Room, UserFavouriteRoom, Review, RoomImage
+from .models import Room, UserFavouriteRoom, Review, RoomImage, UserRoom
 from rest_framework import serializers
 from accounts.serializers import CustomUserSerializer
 
@@ -26,3 +26,9 @@ class UserFvrtRoomSerializer(serializers.ModelSerializer):
         model = UserFavouriteRoom
         fields = '__all__'
 
+class UserRoomSerializer(serializers.ModelSerializer):
+    room = RoomSerializer(read_only=True)
+    user = CustomUserSerializer(read_only=True)
+    class Meta:
+        model = UserRoom
+        fields = '__all__'

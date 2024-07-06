@@ -2,6 +2,7 @@ from django.utils import timezone
 from twilio.rest import Client
 import random
 from .models import CustomUser
+from rooms.models import Room, UserRoom
 
 def generate_unique_phone():
     while True:
@@ -18,6 +19,23 @@ def is_valid_otp(user):
         return False
     except Exception as e:
         print(e)
+
+
+def check_room_availability(room_id):
+    try:
+        room_bookings = UserRoom.objects.all()
+        if room_bookings:
+            for room in room_bookings:
+                if room.checkout_date >= timezone.now():
+                    room.is_active = False
+                    room.save()
+
+        booked_room = UserRoom.objects.filter(room=room_id, is_active=True).first()
+        return booked_room
+    
+    except Exception as e:
+        return str(e)
+
 
 """
 sending a message by using twilio

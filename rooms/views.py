@@ -25,13 +25,24 @@ class GetAllRooms(APIView):
             rooms_paginated = paginator.paginate_queryset(rooms, request)
             serializer = RoomSerializer(rooms_paginated, many=True)
 
-            return paginator.get_paginated_response({
+            paginated_response = paginator.get_paginated_response(serializer.data)
+
+            # Customize the response structure
+            return Response({
                 'success': True,
                 'message': 'All rooms',
                 'data': {
-                    serializer.data 
+                    'rooms': paginated_response.data,
+                    'pagination': {
+                        'count': paginator.page.paginator.count,
+                        'page_size': paginator.page_size,
+                        'current_page': paginator.page.number,
+                        'total_pages': paginator.page.paginator.num_pages,
+                        'next': paginated_response.data['next'],
+                        'previous': paginated_response.data['previous']
+                    }
                 }
-            })
+            }, status=status.HTTP_200_OK)
             
         except Exception as e:
             return Response({
@@ -82,18 +93,29 @@ class FilterRoomsByName(APIView):
             else:
                 rooms = Room.objects.all()
             
-            if rooms.exists():
-                serializer = RoomSerializer(rooms, many=True)
-                return Response({
-                    'success': True,
-                    'message': 'Rooms found',
-                    'data': serializer.data
-                }, status=status.HTTP_200_OK)
-            else:
-                return Response({
-                    'success': False,
-                    'message': 'No rooms found'
-                }, status=status.HTTP_404_NOT_FOUND)
+            paginator = PageNumberPagination()
+            paginator.page_size = 10
+            rooms_paginated = paginator.paginate_queryset(rooms, request)
+            serializer = RoomSerializer(rooms_paginated, many=True)
+
+            paginated_response = paginator.get_paginated_response(serializer.data)
+
+            # Customize the response structure
+            return Response({
+                'success': True,
+                'message': 'Rooms found' if rooms.exists() else 'No rooms found',
+                'data': {
+                    'rooms': paginated_response.data,
+                    'pagination': {
+                        'count': paginator.page.paginator.count,
+                        'page_size': paginator.page_size,
+                        'current_page': paginator.page.number,
+                        'total_pages': paginator.page.paginator.num_pages,
+                        'next': paginated_response.data['next'],
+                        'previous': paginated_response.data['previous']
+                    }
+                }
+            }, status=status.HTTP_200_OK if rooms.exists() else status.HTTP_404_NOT_FOUND)
         
         except Exception as e:
             return Response({
@@ -139,32 +161,42 @@ class AddOrRemoveFavoriteRoom(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
         
 
-class GetAllfavouriteRooms(APIView):
+class GetAllFavouriteRooms(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         try:
-            user_fvrt_room = UserFavouriteRoom.objects.filter(user = request.user).all()
-            if user_fvrt_room:
-                serializer = UserFvrtRoomSerializer(user_fvrt_room, many=True)
-                return Response({
-                    'success': True,
-                   'message': 'Favourite rooms',
-                    'data': serializer.data
-                }, status=status.HTTP_200_OK)
+            user_fvrt_room = UserFavouriteRoom.objects.filter(user=request.user).all()
             
-            else:
-                return Response({
-                    'success': False,
-                   'message': 'No room found'
-                }, status=status.HTTP_404_NOT_FOUND)
-                  
+            paginator = PageNumberPagination()
+            paginator.page_size = 10
+            paginated_rooms = paginator.paginate_queryset(user_fvrt_room, request)
+            serializer = UserFvrtRoomSerializer(paginated_rooms, many=True)
+            
+            paginated_response = paginator.get_paginated_response(serializer.data)
+            
+            return Response({
+                'success': True,
+                'message': 'Favourite rooms',
+                'data': {
+                    'rooms': paginated_response.data,
+                    'pagination': {
+                        'count': paginator.page.paginator.count,
+                        'page_size': paginator.page_size,
+                        'current_page': paginator.page.number,
+                        'total_pages': paginator.page.paginator.num_pages,
+                        'next': paginated_response.data['next'],
+                        'previous': paginated_response.data['previous']
+                    }
+                }
+            }, status=status.HTTP_200_OK if user_fvrt_room.exists() else status.HTTP_404_NOT_FOUND)
+            
         except Exception as e:
             return Response({
                 'success': False,
                 'message': str(e)
-                }, status=status.HTTP_400_BAD_REQUEST)    
+            }, status=status.HTTP_400_BAD_REQUEST)    
 
 
 class GetUserFavouriteRoom(APIView):
@@ -173,29 +205,36 @@ class GetUserFavouriteRoom(APIView):
     
     def get(self, request):
         try:
-            user_fvrt_room = UserFavouriteRoom.objects.filter(user = request.user).first()
-            if user_fvrt_room:
-                serializer = UserFvrtRoomSerializer(user_fvrt_room)
-
-                return Response({
+            user_fvrt_rooms = UserFavouriteRoom.objects.filter(user=request.user)
+            
+            paginator = PageNumberPagination()
+            paginator.page_size = 10
+            paginated_rooms = paginator.paginate_queryset(user_fvrt_rooms, request)
+            serializer = UserFvrtRoomSerializer(paginated_rooms, many=True)
+            
+            paginated_response = paginator.get_paginated_response(serializer.data)
+            
+            return Response({
                 'success': True,
-                'message': 'Room',
-                    'data': {
-                        serializer.data
+                'message': 'Favourite rooms',
+                'data': {
+                    'rooms': paginated_response.data,
+                    'pagination': {
+                        'count': paginator.page.paginator.count,
+                        'page_size': paginator.page_size,
+                        'current_page': paginator.page.number,
+                        'total_pages': paginator.page.paginator.num_pages,
+                        'next': paginated_response.data['next'],
+                        'previous': paginated_response.data['previous']
                     }
-                }, status=status.HTTP_200_OK)
-            
-            else:
-                return Response({
-                   'success': False,
-                   'message': 'room not found'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
+                }
+            }, status=status.HTTP_200_OK)
+        
         except Exception as e:
             return Response({
                 'success': False,
                 'message': str(e)
-                }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class GetAllReviews(APIView):
@@ -205,28 +244,35 @@ class GetAllReviews(APIView):
     def get(self, request):
         try:
             reviews = Review.objects.all()
-            if reviews:
-                serializer = ReviewSerializer(reviews, many=True)
-
-                return Response({
+            
+            paginator = PageNumberPagination()
+            paginator.page_size = 10
+            paginated_reviews = paginator.paginate_queryset(reviews, request)
+            serializer = ReviewSerializer(paginated_reviews, many=True)
+            
+            paginated_response = paginator.get_paginated_response(serializer.data)
+            
+            return Response({
                 'success': True,
                 'message': 'Reviews',
-                    'data': {
-                        serializer.data
+                'data': {
+                    'reviews': paginated_response.data,
+                    'pagination': {
+                        'count': paginator.page.paginator.count,
+                        'page_size': paginator.page_size,
+                        'current_page': paginator.page.number,
+                        'total_pages': paginator.page.paginator.num_pages,
+                        'next': paginated_response.data['next'],
+                        'previous': paginated_response.data['previous']
                     }
-                }, status=status.HTTP_200_OK)
-            
-            else:
-                return Response({
-                   'success': False,
-                   'message': 'no reviews'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
+                }
+            }, status=status.HTTP_200_OK if reviews.exists() else status.HTTP_404_NOT_FOUND)
+        
         except Exception as e:
             return Response({
                 'success': False,
                 'message': str(e)
-                }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=status.HTTP_400_BAD_REQUEST)
         
 
 class BookRoom(APIView):
@@ -241,15 +287,8 @@ class BookRoom(APIView):
             checkin_date = datetime.strptime(request.data.get('checkin_date'), '%Y-%m-%d %H:%M:%S')
             checkout_date = datetime.strptime(request.data.get('checkout_date'), '%Y-%m-%d %H:%M:%S')
 
-            # Check if room exists
-            room_bookings = UserRoom.objects.all()
-            if room_bookings:
-                for room in room_bookings:
-                    if room.checkout_date >= timezone.now():
-                        room.delete()
-            
-            booked_room = UserRoom.objects.filter(room=room_id).first()
-            if booked_room:
+            # Check if room booked
+            if check_room_availability(room_id):
                 return Response({
                 'success': False,
                 'message': 'Room already booked'
@@ -289,18 +328,31 @@ class BookRoom(APIView):
                         custom_user.username = full_name
                         custom_user.govt_id = govt_id
                         custom_user.account_balance = account_balance
-
                         # Deduct the account balance
                         custom_user.account_balance = account_balance - total_expense
+                        custom_user.save()
 
                         # Book the room for the user
-                        UserRoom.objects.create(user=user, room=room, checkin_date=checkin_date,
-                                                        checkout_date=checkout_date)
+                        user_room = UserRoom(user=custom_user, room=room, checkin_date=checkin_date, checkout_date=checkout_date)
+                        user_room.save()
+
+                        # Create a ticket
+                        ticket = RoomTicket(user=custom_user, room=room, checkin_date=checkin_date, checkout_date=checkout_date)
+                        ticket.save()
 
                         return Response({
                         'success': True,
-                        'message': 'Room booked successfully'
-                        }, status=status.HTTP_400_BAD_REQUEST)
+                        'message': 'Room booked successfully',
+                        'data':{
+                            'user_name': custom_user.username,
+                            'user_number': custom_user.phone,
+                            'user_email': custom_user.email,
+                            'user_room': user_room.room.name,
+                            'guests': member,
+                            'checkin_date': checkin_date,
+                            'checkout_date':checkout_date
+                        }
+                        }, status=status.HTTP_201_CREATED)
                 
                 else:
                     return Response({
@@ -314,3 +366,211 @@ class BookRoom(APIView):
                 'success': False,
                 'message': str(e)
                 }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CancelBooking(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id):
+        try:
+            # Get user and room data from request
+            user = request.user
+            room = Room.objects.filter(id=id).first()
+            custom_user = CustomUser.objects.filter(phone=user).first()
+            room_booking = UserRoom.objects.filter(room=room, user=user).first()
+
+            if not room_booking:
+                return Response({
+                    'success': False,
+                    'message': 'No active booking found for this room'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Perform checkout
+            room_booking.checkout_date = timezone.now()
+            room_booking.is_active = False
+            room_booking.save()
+
+            # Optionally update user account balance if necessary
+            # custom_user = CustomUser.objects.filter(id=user.id).first()
+            # custom_user.account_balance += <some_amount>
+            # custom_user.save()
+
+            return Response({
+                'success': True,
+                'message': 'Checked out successfull',
+                'data': {
+                    'user_name': custom_user.username,
+                    'user_email': custom_user.email,
+                    'room_name': room_booking.room.name,
+                    'checkout_date': room_booking.checkout_date,
+                }
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+
+class AllBookings(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            # Get user and room data from request
+            user = request.user
+            all_room_booking = UserRoom.objects.all()
+            room_booking = []
+            
+            for booking in all_room_booking:
+                if booking.user == user:
+                    room_booking.append(booking)
+
+            if room_booking:
+                serializer = UserRoomSerializer(room_booking, many=True)
+                return Response({
+                    'success': True,
+                    'message': 'All Bookings',
+                    'data': serializer.data
+                }, status=status.HTTP_200_OK)
+            
+            else:
+                return Response({
+                    'success': False,
+                    'message': 'No active bookings found for you'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class OngoingBookings(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            # Get user and room data from request
+            user = request.user
+            room_booking = UserRoom.objects.filter(user=user, is_active=True)
+            
+            if room_booking:
+                serializer = UserRoomSerializer(room_booking, many=True)
+                return Response({
+                    'success': True,
+                    'message': 'Ongoing Bookings',
+                    'data': serializer.data
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'success': False,
+                    'message': 'No active bookings found for you'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CompletedBookings(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            # Get user and room data from request
+            user = request.user
+            room_booking = UserRoom.objects.filter(user=user, is_active=False)
+            
+            if room_booking:
+                serializer = UserRoomSerializer(room_booking, many=True)
+                return Response({
+                    'success': True,
+                    'message': 'Completed Bookings',
+                    'data': serializer.data
+                }, status=status.HTTP_200_OK)
+            
+            else:
+                return Response({
+                    'success': False,
+                    'message': 'No active bookings found for you'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)    
+
+
+class LeaveReview(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, id):
+        try:
+            # Get user and room data from request
+            user = request.user
+            stars = request.data.get('stars')
+            review_desc = request.data.get('review_desc')
+            room = Room.objects.filter(id=id).first()
+            
+            Review.objects.create(
+                user=user, 
+                room=room,
+                stars=stars,
+                review_desc=review_desc)
+            
+            return Response({
+                'success': True,
+                'message': 'Review submitted successfully',
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ViewTicket(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id):
+        try:
+            # Get user and room data from request
+            user = request.user
+            room = Room.objects.filter(id=id).first()
+            room_ticket = RoomTicket.objects.filter(user=user, room=room).first()
+            
+            if room_ticket:
+                return Response({
+                    'success': True,
+                    'message': 'Room ticket',
+                    'data': {
+                        'ticket_number': room_ticket.id,
+                        'room_name': room.name,
+                        'checkin_date': room_ticket.checkin_date,
+                        'checkout_date': room_ticket.checkout_date}
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({
+                    'success': False,
+                    'message': 'No room ticket found for this room'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
