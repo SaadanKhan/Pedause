@@ -7,7 +7,7 @@ admin.site.register(Restaurant)
 
 @admin.register(UserRestaurantBooking)
 class PersonAdmin(admin.ModelAdmin):
-    list_display = ['user', 'restaurant']
+    list_display = ['user', 'restaurant', 'is_active']
 
 @admin.register(RestaurantReview)
 class PersonAdmin(admin.ModelAdmin):

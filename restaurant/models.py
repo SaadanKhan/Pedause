@@ -17,6 +17,7 @@ class Restaurant(models.Model):
     main_image = models.ImageField(upload_to='uploads/', default='static/uploads/restaurant.jpeg')
     about = models.TextField(null=True, blank=True, default="About the restaurant")
     capacity = models.IntegerField(default=1)
+    restaurant_phone = models.CharField(max_length=15, unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)

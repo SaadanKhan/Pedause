@@ -22,6 +22,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class UserFvrtRoomSerializer(serializers.ModelSerializer):
+    room = RoomSerializer()
     class Meta:
         model = UserFavouriteRoom
         fields = '__all__'

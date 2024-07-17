@@ -8,6 +8,12 @@ class RestaurantSerializer(serializers.ModelSerializer):
         model = Restaurant
         fields = '__all__'
 
+class RestaurantCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RestaurantCategory
+        fields = '__all__'
+
+
 class UserFvrtRestaurantSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserFavouriteRestaurant
